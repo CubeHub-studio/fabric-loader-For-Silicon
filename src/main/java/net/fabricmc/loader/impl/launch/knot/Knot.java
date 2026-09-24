@@ -44,6 +44,7 @@ import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.fabricmc.loader.impl.FormattedException;
 import net.fabricmc.loader.impl.game.GameProvider;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
+import net.fabricmc.loader.impl.launch.silicon.SiliconHostBridge;
 import net.fabricmc.loader.impl.launch.FabricMixinBootstrap;
 import net.fabricmc.loader.impl.util.LoaderUtil;
 import net.fabricmc.loader.impl.util.SystemProperties;
@@ -141,6 +142,17 @@ public final class Knot extends FabricLauncherBase {
 		FabricLoaderImpl loader = FabricLoaderImpl.INSTANCE;
 		SiliconCompatibility.begin(loader);
 		loader.setGameProvider(provider);
+
+		if (SiliconCompatibility.isEnabled() && SystemProperties.isSet("fabric.silicon.bridge")) {
+			try {
+				int port = Integer.getInteger("fabric.silicon.port", 8765);
+				SiliconHostBridge.start(port);
+				Log.info(LogCategory.GENERAL, "Silicon host bridge listening on 127.0.0.1:%d", port);
+			} catch (IOException e) {
+				SiliconCompatibility.failed(e);
+				throw new RuntimeException("Unable to start Silicon host bridge", e);
+			}
+		}
 		provider.initialize(this);
 		try {
 			loader.load();
@@ -174,6 +186,7 @@ public final class Knot extends FabricLauncherBase {
 			loader.invokeEntrypoints("preLaunch", PreLaunchEntrypoint.class, PreLaunchEntrypoint::onPreLaunch);
 			SiliconCompatibility.ready(loader);
 		} catch (RuntimeException e) {
+			SiliconCompatibility.failed(e);
 			throw FormattedException.ofLocalized("exception.initializerFailure", e);
 		}
 
