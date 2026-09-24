@@ -51,4 +51,10 @@ test {
 java {
 	sourceCompatibility = JavaVersion.VERSION_1_8
 	targetCompatibility = JavaVersion.VERSION_1_8
+
+	// Use a real JDK for compilation while retaining Java 8 bytecode.
+	// JDK 17 supports javac --release 8, unlike JDK 8 itself.
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
 }
