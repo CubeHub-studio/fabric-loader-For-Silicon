@@ -210,6 +210,12 @@ tasks.register('siliconHostJar', ShadowJar) {
 	relocate 'net.fabricmc.mappingio', 'net.fabricmc.loader.impl.lib.mappingio'
 
 	mergeServiceFiles()
+
+	// Shading signed dependency jars invalidates their original signatures.
+	// Remove signature metadata so the rebuilt host JAR can be verified normally.
+	exclude 'META-INF/*.RSA'
+	exclude 'META-INF/*.SF'
+	exclude 'META-INF/*.DSA'
 }
 
 tasks.register('fatJar', ShadowJar) {
