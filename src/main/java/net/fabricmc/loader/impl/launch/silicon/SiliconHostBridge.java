@@ -38,6 +38,7 @@ public final class SiliconHostBridge {
 		HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
 		SiliconHostBridge bridge = new SiliconHostBridge(server);
 
+		server.createContext("/", SiliconHostBridge::root);
 		server.createContext("/status", SiliconHostBridge::status);
 		server.createContext("/state", SiliconHostBridge::state);
 		server.createContext("/boot", SiliconHostBridge::boot);
@@ -53,15 +54,23 @@ public final class SiliconHostBridge {
 		server.stop(0);
 	}
 
+	private static void root(HttpExchange exchange) throws IOException {
+		addCors(exchange);
+		write(exchange, 200, "{\"service\":\"Silicon Fabric Host\",\"version\":\"0.19.5\"}");
+	}
+
 	private static void status(HttpExchange exchange) throws IOException {
+		addCors(exchange);
 		write(exchange, 200, SiliconCompatibility.getStatus());
 	}
 
 	private static void state(HttpExchange exchange) throws IOException {
+		addCors(exchange);
 		write(exchange, 200, "{"state":"" + escape(SiliconCompatibility.getState()) + ""}");
 	}
 
 	private static void boot(HttpExchange exchange) throws IOException {
+		addCors(exchange);
 		if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
 			write(exchange, 405, "{"error":"POST required"}");
 			return;
@@ -103,12 +112,19 @@ public final class SiliconHostBridge {
 	}
 
 	private static void unload(HttpExchange exchange) throws IOException {
+		addCors(exchange);
 		if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
 			write(exchange, 405, "{"error":"POST required"}");
 			return;
 		}
 
 		write(exchange, 200, "{"state":"unload-requested"}");
+	}
+
+	private static void addCors(HttpExchange exchange) {
+		exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+		exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+		exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
 	}
 
 	private static void write(HttpExchange exchange, int code, String body) throws IOException {
