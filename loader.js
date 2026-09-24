@@ -20,24 +20,46 @@
         version: VERSION,
         url: URL,
 
-        boot(context) {
+        async boot(context) {
             const host = root.SiliconFabricHost;
 
-            if (!host || typeof host.boot !== "function") {
-                throw new Error(
-                    "Fabric Loader 0.19.5 requires a Java host bridge. " +
-                    "The GitHub Pages backend is loaded, but Gandi cannot execute the Java Fabric Loader."
-                );
+            if (host && typeof host.boot === "function") {
+                const result = await host.boot({
+                    loader: "Fabric",
+                    version: VERSION,
+                    silicon: context && context.silicon ? context.silicon : null
+                });
+
+                if (result === false) {
+                    throw new Error("Fabric host bridge rejected startup.");
+                }
+
+                return true;
             }
 
-            const result = host.boot({
-                loader: "Fabric",
-                version: VERSION,
-                silicon: context && context.silicon ? context.silicon : null
+            // Browser/Gandi fallback: connect to the Java host bridge.
+            const port = context && context.silicon && context.silicon.loaderConfig
+                ? context.silicon.loaderConfig.port || 8765
+                : 8765;
+            const base = "http://127.0.0.1:" + Number(port);
+
+            if (typeof fetch !== "function") {
+                throw new Error("No browser fetch API is available for the Fabric host bridge.");
+            }
+
+            const response = await fetch(base + "/boot", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({loader: "Fabric", version: VERSION})
             });
 
-            if (result === false) {
-                throw new Error("Fabric host bridge rejected startup.");
+            const text = await response.text();
+            if (!response.ok) {
+                let message = text;
+                try {
+                    message = JSON.parse(text).error || text;
+                } catch (_) {}
+                throw new Error(message || ("Fabric host returned HTTP " + response.status));
             }
 
             return true;
