@@ -37,7 +37,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.SiliconEntrypoint;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
+import net.fabricmc.loader.impl.SiliconCompatibility;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.fabricmc.loader.impl.FormattedException;
 import net.fabricmc.loader.impl.game.GameProvider;
@@ -137,10 +139,21 @@ public final class Knot extends FabricLauncherBase {
 		Thread.currentThread().setContextClassLoader(cl);
 
 		FabricLoaderImpl loader = FabricLoaderImpl.INSTANCE;
+		SiliconCompatibility.begin(loader);
 		loader.setGameProvider(provider);
 		provider.initialize(this);
 		loader.load();
 		loader.freeze();
+		SiliconCompatibility.initialized(loader);
+
+		if (SiliconCompatibility.isEnabled()) {
+			try {
+				loader.invokeEntrypoints("silicon", SiliconEntrypoint.class, SiliconEntrypoint::onSiliconLoad);
+			} catch (RuntimeException e) {
+				SiliconCompatibility.failed(e);
+				throw FormattedException.ofLocalized("exception.initializerFailure", e);
+			}
+		}
 
 		FabricLoaderImpl.INSTANCE.loadClassTweakers();
 
@@ -154,6 +167,7 @@ public final class Knot extends FabricLauncherBase {
 
 		try {
 			loader.invokeEntrypoints("preLaunch", PreLaunchEntrypoint.class, PreLaunchEntrypoint::onPreLaunch);
+			SiliconCompatibility.ready(loader);
 		} catch (RuntimeException e) {
 			throw FormattedException.ofLocalized("exception.initializerFailure", e);
 		}
