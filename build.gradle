@@ -179,6 +179,18 @@ tasks.register('getSat4jAbout', Copy) {
 	into layout.buildDirectory.dir("sat4j")
 }
 
+
+
+tasks.register('siliconHostJar', Jar) {
+	dependsOn classes
+	archiveBaseName = "silicon-fabric-host"
+	archiveClassifier = ""
+	from sourceSets.main.output
+	manifest {
+		attributes('Main-Class': 'net.fabricmc.loader.impl.launch.silicon.SiliconFabricHost')
+	}
+}
+
 tasks.register('fatJar', ShadowJar) {
 	dependsOn getSat4jAbout
 	from sourceSets.main.output
