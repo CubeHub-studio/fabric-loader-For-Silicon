@@ -1,6 +1,7 @@
 package net.fabricmc.loader.impl.launch.silicon;
 
 import net.fabricmc.loader.impl.launch.knot.Knot;
+import net.fabricmc.loader.impl.SiliconCompatibility;
 import net.fabricmc.loader.api.SiliconLoader;
 
 /**
