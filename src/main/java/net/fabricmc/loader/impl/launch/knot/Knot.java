@@ -142,17 +142,22 @@ public final class Knot extends FabricLauncherBase {
 		SiliconCompatibility.begin(loader);
 		loader.setGameProvider(provider);
 		provider.initialize(this);
-		loader.load();
-		loader.freeze();
-		SiliconCompatibility.initialized(loader);
+		try {
+			loader.load();
+			loader.freeze();
+			SiliconCompatibility.initialized(loader);
 
-		if (SiliconCompatibility.isEnabled()) {
-			try {
-				loader.invokeEntrypoints("silicon", SiliconEntrypoint.class, SiliconEntrypoint::onSiliconLoad);
-			} catch (RuntimeException e) {
-				SiliconCompatibility.failed(e);
-				throw FormattedException.ofLocalized("exception.initializerFailure", e);
+			if (SiliconCompatibility.isEnabled()) {
+				try {
+					loader.invokeEntrypoints("silicon", SiliconEntrypoint.class, SiliconEntrypoint::onSiliconLoad);
+				} catch (RuntimeException e) {
+					SiliconCompatibility.failed(e);
+					throw FormattedException.ofLocalized("exception.initializerFailure", e);
+				}
 			}
+		} catch (RuntimeException e) {
+			SiliconCompatibility.failed(e);
+			throw e;
 		}
 
 		FabricLoaderImpl.INSTANCE.loadClassTweakers();
