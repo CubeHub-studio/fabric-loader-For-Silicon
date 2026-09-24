@@ -144,7 +144,7 @@ java {
 	targetCompatibility = JavaVersion.VERSION_1_8
 
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(8)
 	}
 }
 
