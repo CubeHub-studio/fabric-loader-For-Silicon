@@ -3,7 +3,6 @@ package net.fabricmc.loader.impl.launch.silicon;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +13,6 @@ import com.sun.net.httpserver.HttpServer;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.fabricmc.loader.impl.SiliconCompatibility;
 import net.fabricmc.loader.impl.game.GameProvider;
-import net.fabricmc.loader.impl.launch.knot.Knot;
 
 /**
  * Minimal local HTTP bridge for Silicon-compatible Fabric Loader hosts.
@@ -66,20 +64,20 @@ public final class SiliconHostBridge {
 
 	private static void state(HttpExchange exchange) throws IOException {
 		addCors(exchange);
-		write(exchange, 200, "{"state":"" + escape(SiliconCompatibility.getState()) + ""}");
+		write(exchange, 200, "{\"state\":\"" + escape(SiliconCompatibility.getState()) + "\"}");
 	}
 
 	private static void boot(HttpExchange exchange) throws IOException {
 		addCors(exchange);
 		if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-			write(exchange, 405, "{"error":"POST required"}");
+			write(exchange, 405, "{\"error\":\"POST required\"}");
 			return;
 		}
 
 		FabricLoaderImpl loader = FabricLoaderImpl.INSTANCE;
 
 		if (!SiliconCompatibility.isEnabled()) {
-			write(exchange, 409, "{"error":"Silicon compatibility is disabled"}");
+			write(exchange, 409, "{\"error\":\"Silicon compatibility is disabled\"}");
 			return;
 		}
 
@@ -92,7 +90,7 @@ public final class SiliconHostBridge {
 			GameProvider provider = loader.tryGetGameProvider();
 
 			if (provider == null) {
-				write(exchange, 503, "{"error":"Fabric game provider is not initialized"}");
+				write(exchange, 503, "{\"error\":\"Fabric game provider is not initialized\"}");
 				return;
 			}
 
@@ -100,25 +98,25 @@ public final class SiliconHostBridge {
 			// exposes its state and never fakes readiness.
 			if (!"initialized".equals(SiliconCompatibility.getState())
 					&& !"starting".equals(SiliconCompatibility.getState())) {
-				write(exchange, 409, "{"error":"Fabric Loader is not in a bootable Silicon state"}");
+				write(exchange, 409, "{\"error\":\"Fabric Loader is not in a bootable Silicon state\"}");
 				return;
 			}
 
 			write(exchange, 200, SiliconCompatibility.getStatus());
 		} catch (Throwable error) {
 			SiliconCompatibility.failed(error);
-			write(exchange, 500, "{"error":"" + escape(error.getMessage()) + ""}");
+			write(exchange, 500, "{\"error\":\"" + escape(error.getMessage()) + "\"}");
 		}
 	}
 
 	private static void unload(HttpExchange exchange) throws IOException {
 		addCors(exchange);
 		if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-			write(exchange, 405, "{"error":"POST required"}");
+			write(exchange, 405, "{\"error\":\"POST required\"}");
 			return;
 		}
 
-		write(exchange, 200, "{"state":"unload-requested"}");
+		write(exchange, 200, "{\"state\":\"unload-requested\"}");
 	}
 
 	private static void addCors(HttpExchange exchange) {
@@ -138,6 +136,6 @@ public final class SiliconHostBridge {
 
 	private static String escape(String value) {
 		if (value == null) return "";
-		return value.replace("\\", "\\\\").replace(""", "\"");
+		return value.replace("\\", "\\\\").replace("\"", "\\\"");
 	}
 }
