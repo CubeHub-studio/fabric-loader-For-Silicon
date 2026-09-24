@@ -22,6 +22,8 @@ public final class SystemProperties {
 	// whether to use a class loader that is an instance of URLClassLoader
 	public static final String USE_COMPAT_CL = "fabric.loader.useCompatibilityClassLoader";
 	public static final String SIDE = "fabric.side";
+	// enables the Silicon compatibility bridge and Silicon entrypoints
+	public static final String SILICON = "fabric.silicon";
 	// file to source mappings from, defaults to mappings/mappings.tiny on the class path
 	public static final String MAPPING_PATH = "fabric.mappingPath";
 	// mapping namespace used by the game, defaults to named if DEVELOPMENT is set or official otherwise
